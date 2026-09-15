@@ -1,5 +1,6 @@
-import { StyleSheet, View, Image } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, View, Image, Text } from 'react-native';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetasList from './components/MetasList';
 import MetaInput from './components/MetaInput';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -8,8 +9,25 @@ export default function App() {
 
   const [metas, setMetas] = useState([]);
 
+  // Carrega a lista ao abrir o app
+  useEffect(() => {
+    async function carregarDados() {
+      const dadosSalvos = await AsyncStorage.getItem('@listaTarefas');
+      if (dadosSalvos) {
+        setMetas(JSON.parse(dadosSalvos));
+        console.log('Dados carregados do AsyncStorage:', JSON.parse(dadosSalvos));
+      }
+    }
+    carregarDados();
+  }, []);
+
+  // Salva a lista no AsyncStorage sempre que ela for alterada
+  useEffect(() => {
+    AsyncStorage.setItem('@listaTarefas', JSON.stringify(metas));
+    console.log('Dados armazenados do AsyncStorage:', JSON.stringify(metas));
+  }, [metas]);
+
   function adicionarMetaHandler(inputMeta) {
-    // Cria um objeto com id único e o texto da meta
     const novaMeta = { id: Math.random().toString(), texto: inputMeta };
     setMetas([...metas, novaMeta]);
   }
@@ -25,10 +43,11 @@ export default function App() {
 
         <View style={styles.imageContainer}>
           <Image
-            source={require('./assets/favicon.png')} // troque pelo caminho da sua imagem
+            source={require('./assets/favicon.png')}
             style={styles.image}
             resizeMode="contain"
           />
+          <Text style={styles.appTitle}>Minhas Metas</Text>
         </View>
 
         <View style={styles.mainContainer}>
@@ -63,7 +82,8 @@ const styles = StyleSheet.create({
   },
 
   imageContainer: {
-    alignItems: 'left',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 10,
     paddingLeft: 30,
   },
@@ -71,5 +91,11 @@ const styles = StyleSheet.create({
   image: {
     width: 50,
     height: 50,
+  },
+
+  appTitle: {
+    marginLeft: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
